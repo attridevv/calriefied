@@ -1,12 +1,12 @@
-/* Calriefied — app.js */
+/* Calorified — app.js */
 /* Fresh, vitality health tracker */
 
 'use strict';
 
 // ===== STORAGE KEYS =====
-const DATA_KEY  = 'calriefied_data';
-const PROFILE_KEY = 'calriefied_profile';
-const BODY_KEY  = 'calriefied_body';
+const DATA_KEY  = 'calorified_data';
+const PROFILE_KEY = 'calorified_profile';
+const BODY_KEY  = 'calorified_body';
 
 // ===== PROFILE (persistent across days) =====
 function getProfile() {
