@@ -15,6 +15,45 @@ export async function GET(request: Request) {
     const isToday = searchParams.get("today") === "1";
     const days = parseInt(searchParams.get("days") || "1");
 
+    const isRepeat = searchParams.get("repeat") === "1";
+    if (isRepeat) {
+      const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+      const yStart = new Date(yesterday); yStart.setHours(0, 0, 0, 0);
+      const yEnd = new Date(yesterday); yEnd.setHours(23, 59, 59, 999);
+
+      const yesterdayEntries = await prisma.foodEntry.findMany({
+        where: { userId, date: { gte: yStart, lte: yEnd } },
+        orderBy: { createdAt: "asc" },
+      });
+
+      if (yesterdayEntries.length === 0) {
+        return NextResponse.json({ entries: [], repeated: 0 });
+      }
+
+      const today = new Date();
+      const entries = await Promise.all(
+        yesterdayEntries.map(e =>
+          prisma.foodEntry.create({
+            data: {
+              userId: e.userId,
+              date: today,
+              mealType: e.mealType,
+              name: e.name,
+              serving: e.serving,
+              calories: e.calories,
+              protein: e.protein,
+              carbs: e.carbs,
+              fat: e.fat,
+              fiber: e.fiber,
+              notes: e.notes,
+            },
+          })
+        )
+      );
+
+      return NextResponse.json({ entries, repeated: entries.length });
+    }
+
     if (isToday) {
       const { start, end } = todayRange();
       const [entries, profile, waterRecs] = await Promise.all([
