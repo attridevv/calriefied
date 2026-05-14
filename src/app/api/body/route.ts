@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { isUnauthorizedError, requireCurrentDbUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { withDbRetry } from "@/lib/retry";
 
 export async function GET() {
   try {
     const { id: userId } = await requireCurrentDbUser();
-    const stats = await prisma.bodyStat.findMany({ where: { userId }, orderBy: { date: "desc" }, take: 60 });
+    const stats = await withDbRetry(() => prisma.bodyStat.findMany({ where: { userId }, orderBy: { date: "desc" }, take: 60 }));
     return NextResponse.json(stats);
   } catch (error) {
     if (isUnauthorizedError(error)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

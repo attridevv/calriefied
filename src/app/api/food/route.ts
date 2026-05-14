@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isUnauthorizedError, requireCurrentDbUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { withDbRetry } from "@/lib/retry";
 
 function todayRange() {
   const start = new Date(); start.setHours(0, 0, 0, 0);
@@ -56,11 +57,11 @@ export async function GET(request: Request) {
 
     if (isToday) {
       const { start, end } = todayRange();
-      const [entries, profile, waterRecs] = await Promise.all([
+      const [entries, profile, waterRecs] = await withDbRetry(() => Promise.all([
         prisma.foodEntry.findMany({ where: { userId, date: { gte: start, lte: end } }, orderBy: { createdAt: "desc" } }),
         prisma.profile.findUnique({ where: { userId } }),
         prisma.waterIntake.findMany({ where: { userId, date: { gte: start, lte: end } } }),
-      ]);
+      ]));
 
       const summary = entries.reduce((s, e) => ({
         calories: s.calories + (e.calories || 0),
